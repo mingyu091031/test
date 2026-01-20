@@ -1,5 +1,6 @@
 import requests
 import json
+import uuid
 from iris import ChatContext
 from iris.decorators import *
 
@@ -36,6 +37,35 @@ def get_auth_from_iris(iris_endpoint: str):
         traceback.print_exc()
         return None
 
+def get_link_id_from_room(chat: ChatContext):
+    """채팅방의 link_id를 가져옵니다 (오픈채팅방용)."""
+    try:
+        chat_id = str(chat.room.id)
+        
+        print(f"[DEBUG] Getting link_id for chat_id: {chat_id}")
+        
+        # chat_rooms 테이블에서 직접 link_id 조회
+        query = "SELECT id, link_id, type FROM chat_rooms WHERE id = ?"
+        result = chat.api.query(
+            query=query,
+            bind=[chat_id]
+        )
+        
+        print(f"[DEBUG] chat_rooms query result: {result}")
+        
+        if result and len(result) > 0 and result[0].get("link_id"):
+            link_id = result[0].get("link_id")
+            print(f"[DEBUG] Found link_id: {link_id}")
+            return link_id
+        
+        print(f"[DEBUG] No link_id found - this might not be an open chat")
+        return None
+    except Exception as e:
+        print(f"[ERROR] Error getting link_id: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
 def get_post_id_from_room(chat: ChatContext):
     """채팅방의 moim_meta에서 post_id를 가져옵니다."""
     try:
@@ -64,18 +94,30 @@ def get_post_id_from_room(chat: ChatContext):
         traceback.print_exc()
         return None
 
-def share_notice(chat: ChatContext, post_id: str, session_info: str):
+def share_notice(chat: ChatContext, post_id: str, session_info: str, link_id: str = None):
     """공지를 공유합니다."""
     try:
-        url = f"https://talkmoim-api.kakao.com/posts/{post_id}/share"
+        # 오픈채팅 여부에 따라 URL 변경
+        if link_id:
+            url = f"https://open.kakao.com/moim/posts/{post_id}/share?link_id={link_id}"
+            print(f"[DEBUG] Using open chat URL with link_id: {link_id}")
+        else:
+            url = f"https://talkmoim-api.kakao.com/posts/{post_id}/share"
+            print(f"[DEBUG] Using regular chat URL")
         
+        # 더 완전한 헤더 설정
         headers = {
-            "Authorization": session_info,
-            "A": "android/25.11.2/ko"
+            "content-length": "0",
+            "accept-encoding": "gzip",
+            "a": "android/25.11.2/ko",
+            "c": str(uuid.uuid4()),
+            "accept-language": "ko",
+            "user-agent": "KT/25.11.2 An/9 ko",
+            "authorization": session_info
         }
         
         print(f"[DEBUG] Sharing notice - URL: {url}")
-        print(f"[DEBUG] Headers: A={headers['A']}")
+        print(f"[DEBUG] Headers: {headers}")
         
         response = requests.post(url, headers=headers)
         
@@ -139,8 +181,11 @@ def share_notice_command(chat: ChatContext):
             chat.reply("인증 정보를 가져올 수 없습니다.")
             return
         
+        # 오픈채팅방이면 link_id 가져오기
+        link_id = get_link_id_from_room(chat)
+        
         # 공지 공유
-        success, message = share_notice(chat, post_id, session_info)
+        success, message = share_notice(chat, post_id, session_info, link_id)
         
         if success:
             chat.reply(f"✅ 공지 공유 완료\npost_id: {post_id}")
@@ -174,8 +219,11 @@ def share_current_notice(chat: ChatContext):
             chat.reply("인증 정보를 가져올 수 없습니다.")
             return
         
+        # 오픈채팅방이면 link_id 가져오기
+        link_id = get_link_id_from_room(chat)
+        
         # 공지 공유
-        success, message = share_notice(chat, post_id, session_info)
+        success, message = share_notice(chat, post_id, session_info, link_id)
         
         if success:
             chat.reply(f"✅ 현재 방의 공지를 공유했습니다\npost_id: {post_id}")

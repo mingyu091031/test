@@ -18,10 +18,12 @@ import sys, threading
 
 from bots.mentions import mention_user, mention_new_member, mention_self_and_bot, mention_room_master
 from bots.notification import share_notice_command, share_current_notice
+from bots.kakao_reaction import KakaoReaction, add_reaction_to_message
 
 iris_url = sys.argv[1]
 bot = Bot(iris_url)
 
+reactor = KakaoReaction(iris_url)
 @bot.on_event("message")
 @is_not_banned
 def on_message(chat: ChatContext):
@@ -42,6 +44,26 @@ def on_message(chat: ChatContext):
             
             case "!현재공지":
                 share_current_notice(chat)
+
+            case "!react":
+                # !react 숫자 형태로 리액션 추가
+                try:
+                    reaction_num = chat.message.msg[7:].strip()
+                    
+                    if not reaction_num:
+                        chat.reply("사용법: !react [숫자]\n0:취소, 1:하트, 2:좋아요, 3:체크, 4:웃음, 5:놀람, 6:슬픔")
+                        return
+                    
+                    reaction_type = int(reaction_num)
+                    
+                    # 리액션 추가
+                    success = add_reaction_to_message(chat, reaction_type, reactor, iris_url)
+                    
+                except ValueError:
+                    chat.reply("숫자를 입력하세요!\n사용법: !react [숫자]\n0:취소, 1:하트, 2:좋아요, 3:체크, 4:웃음, 5:놀람, 6:슬픔")
+                except Exception as e:
+                    print(f"React error: {e}")
+                    chat.reply("리액션 추가 중 오류가 발생했습니다.")
 
     except Exception as e :
         print(e)
