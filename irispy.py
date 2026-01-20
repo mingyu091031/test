@@ -17,6 +17,7 @@ from bots.detect_nickname_change import detect_nickname_change
 import sys, threading
 
 from bots.mentions import mention_user, mention_new_member, mention_self_and_bot, mention_room_master
+from bots.notification import share_notice_command, share_current_notice
 
 iris_url = sys.argv[1]
 bot = Bot(iris_url)
@@ -35,6 +36,12 @@ def on_message(chat: ChatContext):
             
             case "!방장":
                 mention_room_master(chat)
+            
+            case "!공지":
+                share_notice_command(chat)
+            
+            case "!현재공지":
+                share_current_notice(chat)
 
     except Exception as e :
         print(e)
