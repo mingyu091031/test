@@ -17,7 +17,7 @@ from bots.detect_nickname_change import detect_nickname_change
 import sys, threading
 
 from bots.mentions import mention_user, mention_new_member, mention_self_and_bot, mention_room_master
-from bots.notification import share_notice_command, share_current_notice
+from bots.notification import share_notice_command, share_current_notice, set_notice_command, delete_notice_command, change_notice_command
 from bots.kakao_reaction import KakaoReaction, add_reaction_to_message
 
 iris_url = sys.argv[1]
@@ -44,6 +44,15 @@ def on_message(chat: ChatContext):
             
             case "!현재공지":
                 share_current_notice(chat)
+            
+            case "!공지등록":
+                set_notice_command(chat)
+            
+            case "!공지삭제":
+                delete_notice_command(chat)
+            
+            case "!공지수정":
+                change_notice_command(chat)
 
             case "!react":
                 # !react 숫자 형태로 리액션 추가
