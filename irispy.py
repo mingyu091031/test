@@ -19,6 +19,7 @@ import sys, threading
 from bots.mentions import mention_user, mention_new_member, mention_self_and_bot, mention_room_master
 from bots.notification import share_notice_command, share_current_notice, set_notice_command, delete_notice_command, change_notice_command
 from bots.kakao_reaction import KakaoReaction, add_reaction_to_message
+from bots.national_weather import send_national_weather
 
 iris_url = sys.argv[1]
 bot = Bot(iris_url)
@@ -53,6 +54,9 @@ def on_message(chat: ChatContext):
             
             case "!공지수정":
                 change_notice_command(chat)
+
+            case "!전국오늘날씨":
+                send_national_weather(chat)
 
             case "!react":
                 # !react 숫자 형태로 리액션 추가
