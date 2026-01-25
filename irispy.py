@@ -19,6 +19,7 @@ import sys, threading
 from bots.mentions import mention_user, mention_new_member, mention_self_and_bot, mention_room_master
 from bots.notification import share_notice_command, share_current_notice, set_notice_command, delete_notice_command, change_notice_command
 from bots.kakao_reaction import KakaoReaction, add_reaction_to_message
+from bots.voice import test_voice
 
 iris_url = sys.argv[1]
 bot = Bot(iris_url)
@@ -54,6 +55,9 @@ def on_message(chat: ChatContext):
             case "!공지수정":
                 change_notice_command(chat)
 
+            case "!음성":
+                test_voice(chat)
+
             case "!react":
                 # !react 숫자 형태로 리액션 추가
                 try:
@@ -78,19 +82,19 @@ def on_message(chat: ChatContext):
         print(e)
 
 @bot.on_event("message")
+@is_not_banned
 def on_message(chat: ChatContext):
-    if chat.message.command == "!test":
-        print("테스트 시작...")
-        try:
-            #chat.reply("동영상 전송 테스트")
-            # 간단한 이미지 테스트
-            #chat.reply_video("1.mp4")
-            #chat.reply_media(["sample3.m4a"])
-            chat.reply_media(["test.mp3"])
-        except Exception as e:
-            print(f"오류: {e}")
-            import traceback
-            traceback.print_exc()
+    try:
+        match chat.message.command:
+            
+            case "!py":
+                python_eval(chat)
+            
+            case "!ev":
+                real_eval(chat, kl)
+            
+    except Exception as e :
+        print(e)
 
 # 입장 멘션을 보낼 방 리스트
 WELCOME_ROOMS = [18472312239224835,18469145050793422]

@@ -4,11 +4,11 @@ import subprocess
 from iris import ChatContext
 from iris.decorators import *
 
-@is_admin
+#@is_admin
 @has_param
 def python_eval(chat: ChatContext):
     with open('temp.py', 'w') as tp:
-        tp.write(chat.message.msg[5:])
+        tp.write(chat.message.msg[4:])
     try:
         exec_out = subprocess.check_output([".venv/bin/python", "temp.py"],stderr=subprocess.PIPE,timeout=30).decode("utf-8")
         if exec_out[-1:] == "\n":
@@ -25,6 +25,6 @@ def python_eval(chat: ChatContext):
 @has_param
 def real_eval(chat: ChatContext, kl):
     try:
-        exec(chat.message.msg[5:])
+        exec(chat.message.msg[4:])
     except Exception as e:
         chat.reply(e)
